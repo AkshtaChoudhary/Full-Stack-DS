@@ -2,4 +2,5 @@ dist
 .venv
 .venv-dev
 .venv-test
-full_stack_ds.egg-info
+*.egg-info
+*.pyc
