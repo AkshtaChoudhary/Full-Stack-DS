@@ -1,0 +1,167 @@
+name: Python Package Build and Test
+
+on:
+  push:
+    branches:
+      - enh/issue#1/refactoring-code
+
+jobs:
+  style_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Create venv and install tools
+        run: |
+          uv venv
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+          # uv pip install -r requirements.txt
+          uv pip install -e ".[formatter]"
+
+      - name: Run isort
+        run: |
+          isort src/ tests/
+
+      - name: Run black
+        run: |
+          black src/ tests/
+
+      - name: Run flake8
+        run: |
+          flake8 src/ tests/ --max-line-length=90
+
+  func_test:
+    runs-on: ubuntu-latest
+    needs: style_test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Create venv and install tools
+        run: |
+          uv venv
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+          # uv pip install -r requirements.txt
+          uv pip install -e ".[test]"
+
+      - name: Install in dev mode
+        run: uv pip install -e .
+
+      - name: Run tests with pytest
+        run: |
+          pytest tests/
+
+  build:
+    runs-on: ubuntu-latest
+    needs: func_test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Create venv and install tools
+        run: |
+          uv venv
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
+          # uv pip install -r requirements.txt
+          uv pip install -r pyproject.toml
+          uv pip install -e ".[build_p]"
+
+      - name: Install tree
+        run: sudo apt-get update && sudo apt-get install -y tree
+
+      - name: Show directory tree before build
+        run: tree -L 3
+
+      - name: Build package
+        run: |
+          python -m build
+
+      - name: Show directory tree after build
+        run: tree -L 3
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+
+  install:
+      runs-on: ubuntu-latest
+      needs: build
+
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v3
+
+        - name: Download artifacts
+          uses: actions/download-artifact@v4
+          with:
+            name: dist
+            path: dist/
+
+        - name: Set up Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: '3.12'
+
+        - name: Install uv
+          run: |
+            curl -LsSf https://astral.sh/uv/install.sh | sh
+            echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+        - name: Create venv and install tools
+          run: |
+            uv venv
+            echo "$PWD/.venv/bin" >> $GITHUB_PATH
+
+        - name: Install built package
+          run: |
+            uv pip install dist/*.whl
+
+        - name: data ingest
+          run: |
+            python scripts/ingest_data.py 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
+
+        - name: model training
+          run: |
+            python scripts/train.py 2>&1  | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
+
+        - name: model scoring
+          run: |
+            python scripts/score.py 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
+
