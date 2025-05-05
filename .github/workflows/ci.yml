@@ -3,7 +3,7 @@ name: Python Package Build and Test
 on:
   push:
     branches:
-      - enh/issue#1/refactoring-code
+      - main
 
 jobs:
   style_test:
