@@ -100,6 +100,9 @@ jobs:
           uv pip install -r pyproject.toml
           uv pip install -e ".[build_p]"
 
+      - name: Install build module
+        run: uv pip install build
+
       - name: Install tree
         run: sudo apt-get update && sudo apt-get install -y tree
 
