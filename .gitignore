@@ -1,0 +1,6 @@
+dist
+.venv
+.venv-dev
+.venv-test
+*.egg-info
+*.pyc

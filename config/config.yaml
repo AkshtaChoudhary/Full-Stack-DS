@@ -1,0 +1,4 @@
+download_url: "https://raw.githubusercontent.com/ageron/handson-ml/master/datasets/housing/housing.tgz"
+raw_data_path: "data/"
+raw_data_file: "housing.csv"
+model_path: "artifacts/final_model.pkl"

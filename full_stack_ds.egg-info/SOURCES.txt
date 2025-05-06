@@ -1,8 +1,0 @@
-README.md
-main.py
-pyproject.toml
-full_stack_ds.egg-info/PKG-INFO
-full_stack_ds.egg-info/SOURCES.txt
-full_stack_ds.egg-info/dependency_links.txt
-full_stack_ds.egg-info/requires.txt
-full_stack_ds.egg-info/top_level.txt
