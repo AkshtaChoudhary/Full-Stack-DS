@@ -2,5 +2,12 @@ dist
 .venv
 .venv-dev
 .venv-test
-*.egg-info
-*.pyc
+**/*.egg-info
+**/*.pyc
+**/__pycache__
+**/*.csv
+**/*.xlsx
+**/*.tgz
+**/*.log
+**/*.pkl
+**/*.joblib
