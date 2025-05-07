@@ -11,3 +11,4 @@ dist
 **/*.log
 **/*.pkl
 **/*.joblib
+mlruns
