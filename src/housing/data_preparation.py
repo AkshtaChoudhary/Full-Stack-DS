@@ -18,16 +18,18 @@ def load_data(config_path="config/config.yaml"):
     return pd.read_csv(data_file)
 
 
-def stratified_split(data):
+def stratified_split(data, testsize=0.2, splits=1):
     data["income_cat"] = pd.cut(
         data["median_income"],
         bins=[0.0, 1.5, 3.0, 4.5, 6.0, np.inf],
         labels=[1, 2, 3, 4, 5],
     )
-    split = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+    split = StratifiedShuffleSplit(n_splits=splits, test_size=testsize, random_state=42)
+
     for train_idx, test_idx in split.split(data, data["income_cat"]):
         strat_train = data.loc[train_idx].drop("income_cat", axis=1)
         strat_test = data.loc[test_idx].drop("income_cat", axis=1)
+
     return strat_train, strat_test
 
 
