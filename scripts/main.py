@@ -77,7 +77,7 @@ def main():
             run_model_scoring(config_path, mlflow_enabled)
 
             logging.info(
-                f"End-to-end ML pipeline completed under parent run ID: {parent_run.info.run_id}"
+                f"End-to-end ML pipeline completed-parent run ID: {parent_run.info.run_id}"
             )
     else:
         logging.info("Running ML pipeline without MLflow tracking.")
