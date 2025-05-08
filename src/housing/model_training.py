@@ -1,44 +1,60 @@
 import logging
-import os
 
-import joblib
-import yaml
+import numpy as np
+from scipy.stats import randint
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import GridSearchCV
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from sklearn.tree import DecisionTreeRegressor
 
 logger = logging.getLogger(__name__)
 
 
-def train_model(X, y, config_path="config/config.yaml"):
-    param_grid = [
-        {
-            "n_estimators": [3, 10, 30],
-            "max_features": [2, 4, 6, 8]
-        },
-        {
-            "bootstrap": [False],
-            "n_estimators": [3, 10],
-            "max_features": [2, 3, 4]
-            },
-    ]
-    grid_search = GridSearchCV(
-        RandomForestRegressor(random_state=42),
-        param_grid,
-        cv=5,
-        scoring="neg_mean_squared_error",
-        return_train_score=True,
-    )
-    grid_search.fit(X, y)
+def train_model(X, y, model_type):
+    if model_type == "linear_regression":
+        model = LinearRegression()
+        model.fit(X, y)
+    if model_type == "decision_tree":
+        model = DecisionTreeRegressor(random_state=42)
+        model.fit(X, y)
+    if model_type == "random_forest_random_search":
+        param_distribs = {
+            "n_estimators": randint(1, 200),
+            "max_features": randint(1, 8),
+        }
+        rnd_search = RandomizedSearchCV(
+            RandomForestRegressor(random_state=42),
+            param_distributions=param_distribs,
+            n_iter=10,
+            cv=5,
+            scoring="neg_mean_squared_error",
+            random_state=42,
+        )
+        rnd_search.fit(X, y)
+        # Get best model
+        model = rnd_search.best_estimator_
+    if model_type == "random_forest_grid_search":
+        param_grid = [
+            {"n_estimators": [3, 10, 30], "max_features": [2, 4, 6, 8]},
+            {"bootstrap": [False], "n_estimators": [3, 10], "max_features": [2, 3, 4]},
+        ]
+        grid_search = GridSearchCV(
+            RandomForestRegressor(random_state=42),
+            param_grid,
+            cv=5,
+            scoring="neg_mean_squared_error",
+            return_train_score=True,
+        )
+        grid_search.fit(X, y)
+        # Get best model
+        model = grid_search.best_estimator_
 
-    logging.info("Training completed.")
-    best_model = grid_search.best_estimator_
+    # Get predictions
+    predictions = model.predict(X)
+    # Compute RMSE
+    rmse = np.sqrt(mean_squared_error(y, predictions))
+    # Compute MAE
+    mae = mean_absolute_error(y, predictions)
 
-    with open(config_path) as f:
-        config = yaml.safe_load(f)
-    model_path = config["model_path"]
-    model_dir = os.path.dirname(model_path)
-    os.makedirs(model_dir, exist_ok=True)
-    joblib.dump(best_model, config["model_path"])
-    logging.info(f"Model saved to {config['model_path']}")
-
-    return best_model
+    return model, rmse, mae
