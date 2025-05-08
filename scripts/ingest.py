@@ -30,8 +30,12 @@ def main():
 
     # Start MLflow run for data preparation if --mlflow is passed
     if args.mlflow:
-        mlflow.set_experiment("Housing Experiment")
-        mlflow.start_run(run_name="Data Preparation", nested=True)
+        run_id = os.environ.get("MLFLOW_RUN_ID")
+        if run_id:
+            mlflow.start_run(run_id=run_id)
+        else:
+            mlflow.set_experiment("Housing Experiment")
+            mlflow.start_run(run_name="Data Preparation", nested=True)
         logging.info("MLflow tracking started.")
 
     logging.info("Starting data ingestion...")

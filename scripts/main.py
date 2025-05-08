@@ -11,9 +11,17 @@ def run_data_preparation(config_path, mlflow_enabled):
         with mlflow.start_run(run_name="Data Preparation", nested=True) as run:
             logging.info(f"Data Preparation Run ID:{run.info.run_id}")
             mlflow.log_param("config_path", config_path)
+
+            env = os.environ.copy()
+            env["MLFLOW_RUN_ID"] = run.info.run_id
+            env["MLFLOW_TRACKING_URI"] = mlflow.get_tracking_uri()
+
             subprocess.run(
-                ["python", "scripts/ingest.py", "--config", config_path, "--mlflow"]
+                ["python", "scripts/ingest.py", "--config", config_path, "--mlflow"],
+                env=env,
+                check=True
             )
+
             mlflow.log_metric("ingestion_complete", 1)
     else:
         subprocess.run(["python", "scripts/ingest.py", "--config", config_path])
@@ -25,8 +33,15 @@ def run_model_training(config_path, mlflow_enabled):
         with mlflow.start_run(run_name="Model Training", nested=True) as run:
             logging.info(f"Model Training Run ID:{run.info.run_id}")
             mlflow.log_param("config_path", config_path)
+
+            env = os.environ.copy()
+            env["MLFLOW_RUN_ID"] = run.info.run_id
+            env["MLFLOW_TRACKING_URI"] = mlflow.get_tracking_uri()
+
             subprocess.run(
-                ["python", "scripts/train.py", "--config", config_path, "--mlflow"]
+                ["python", "scripts/train.py", "--config", config_path, "--mlflow"],
+                env=env,
+                check=True
             )
             mlflow.log_metric("model_training_complete", 1)
     else:
@@ -39,8 +54,15 @@ def run_model_scoring(config_path, mlflow_enabled):
         with mlflow.start_run(run_name="Model Scoring", nested=True) as run:
             logging.info(f"Model Scoring Run ID:{run.info.run_id}")
             mlflow.log_param("config_path", config_path)
+
+            env = os.environ.copy()
+            env["MLFLOW_RUN_ID"] = run.info.run_id
+            env["MLFLOW_TRACKING_URI"] = mlflow.get_tracking_uri()
+
             subprocess.run(
-                ["python", "scripts/score.py", "--config", config_path, "--mlflow"]
+                ["python", "scripts/score.py", "--config", config_path, "--mlflow"],
+                env=env,
+                check=True
             )
             mlflow.log_metric("model_scoring_complete", 1)
     else:

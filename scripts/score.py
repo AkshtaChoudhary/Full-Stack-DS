@@ -34,8 +34,12 @@ def main():
 
     # Start MLflow run if enabled
     if args.mlflow:
-        mlflow.set_experiment("Housing Experiment")
-        mlflow.start_run(run_name="Model Scoring", nested=True)
+        run_id = os.environ.get("MLFLOW_RUN_ID")
+        if run_id:
+            mlflow.start_run(run_id=run_id)
+        else:
+            mlflow.set_experiment("Housing Experiment")
+            mlflow.start_run(run_name="Model Scoring", nested=True)
         logging.info("MLflow tracking started for scoring.")
 
     with open(args.config) as f:
