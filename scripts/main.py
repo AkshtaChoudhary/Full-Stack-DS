@@ -1,118 +1,89 @@
 import argparse
 import logging
-import os
+import subprocess
 
-import joblib
 import mlflow
-import mlflow.sklearn
-import yaml
 
-from housing.data_preparation import load_data, prepare_data, stratified_split
-from housing.logging_utils import configure_logging
-from housing.model_training import train_model
+
+def run_data_preparation(config_path, mlflow_enabled):
+    if mlflow_enabled:
+        # Start MLflow run for data preparation
+        with mlflow.start_run(run_name="Data Preparation", nested=True) as run:
+            logging.info(f"Data Preparation Run ID:{run.info.run_id}")
+            mlflow.log_param("config_path", config_path)
+            subprocess.run(
+                ["python", "scripts/ingest.py", "--config", config_path, "--mlflow"]
+            )
+            mlflow.log_metric("ingestion_complete", 1)
+    else:
+        subprocess.run(["python", "scripts/ingest.py", "--config", config_path])
+
+
+def run_model_training(config_path, mlflow_enabled):
+    if mlflow_enabled:
+        # Start MLflow run for model training
+        with mlflow.start_run(run_name="Model Training", nested=True) as run:
+            logging.info(f"Model Training Run ID:{run.info.run_id}")
+            mlflow.log_param("config_path", config_path)
+            subprocess.run(
+                ["python", "scripts/train.py", "--config", config_path, "--mlflow"]
+            )
+            mlflow.log_metric("model_training_complete", 1)
+    else:
+        subprocess.run(["python", "scripts/train.py", "--config", config_path])
+
+
+def run_model_scoring(config_path, mlflow_enabled):
+    if mlflow_enabled:
+        # Start MLflow run for model scoring
+        with mlflow.start_run(run_name="Model Scoring", nested=True) as run:
+            logging.info(f"Model Scoring Run ID:{run.info.run_id}")
+            mlflow.log_param("config_path", config_path)
+            subprocess.run(
+                ["python", "scripts/score.py", "--config", config_path, "--mlflow"]
+            )
+            mlflow.log_metric("model_scoring_complete", 1)
+    else:
+        subprocess.run(["python", "scripts/score.py", "--config", config_path])
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Train Housing Model")
+    parser = argparse.ArgumentParser(description="End-to-End ML Pipeline")
     parser.add_argument(
         "--config", default="config/config.yaml", help="Path to config YAML"
     )
     parser.add_argument(
-        "--log-level", default="INFO", help="Logging level (e.g. DEBUG, INFO)"
+        "--mlflow",
+        action="store_true",
+        help="Enable MLflow tracking for the entire pipeline",
     )
-    parser.add_argument("--log-path", help="Optional log file path")
-    parser.add_argument(
-        "--no-console-log", action="store_true", help="Suppress console logging"
-    )
-    parser.add_argument("--mlflow", action="store_true", help="Enable MLflow tracking")
     args = parser.parse_args()
 
-    # Configure logging
-    configure_logging(
-        log_level=args.log_level,
-        log_path=args.log_path,
-        console_log=not args.no_console_log,
-    )
+    config_path = args.config
+    mlflow_enabled = args.mlflow
 
-    # Start MLflow run if enabled
-    if args.mlflow:
-        mlflow.set_experiment("Housing Experiment")
-        mlflow.start_run(run_name="Data Preparation", nested=True)
-        logging.info("MLflow tracking started.")
+    # Start the parent MLflow run if enabled
+    if mlflow_enabled:
+        mlflow.set_experiment("Housing Experiment Pipeline")
+        with mlflow.start_run(run_name="End-to-End ML Pipeline") as parent_run:
+            mlflow.log_param("config_path", config_path)
+            logging.info(
+                f"Running ML pipeline with parent run ID: {parent_run.info.run_id}"
+            )
 
-    logging.info("Starting data preparation...")
-    df = load_data(args.config)
+            # Run the child tasks: data preparation, model training, and model scoring
+            run_data_preparation(config_path, mlflow_enabled)
+            run_model_training(config_path, mlflow_enabled)
+            run_model_scoring(config_path, mlflow_enabled)
 
-    with open(args.config) as f:
-        config = yaml.safe_load(f)
-
-    train_set, _ = stratified_split(
-        df, splits=config["splits"], testsize=config["test_size"]
-    )
-    X_train, imputer = prepare_data(train_set.drop("median_house_value", axis=1))
-    y_train = train_set["median_house_value"]
-
-    # Log parameters to MLflow if enabled
-    if args.mlflow:
-        mlflow.log_param("config", args.config)
-        mlflow.log_param("num_features", X_train.shape[1])
-        mlflow.log_param("Stratified Split", config["splits"])
-        mlflow.log_param("Test Size", config["test_size"])
-        mlflow.sklearn.log_model(imputer, artifact_path="imputer")
-
-    # End MLflow run if it was started
-    if args.mlflow:
-        mlflow.end_run()
-        logging.info("Data Preparation MLflow run ended.")
-
-    # Start MLflow run if enabled
-    if args.mlflow:
-        mlflow.set_experiment("Housing Experiment")
-        mlflow.start_run(run_name="Modeling")
-        logging.info("MLflow tracking started.")
-
-    logging.info("Starting model training...")
-    for model_type in [
-        "linear_regression",
-        "decision_tree",
-        "random_forest_random_search",
-        "random_forest_grid_search",
-    ]:
-        logging.info(f"Starting {model_type}...")
-        # Calling the function
-        model, rmse, mae = train_model(X_train, y_train, model_type)
-        logging.info(f"{model_type} Metrics - RMSE: {rmse} & MAE: {mae}")
-        # Dumping model
-        model_path = config[model_type]
-        # Model dump directory
-        model_dir = os.path.dirname(model_path)
-        # Create directory if does not exists
-        os.makedirs(model_dir, exist_ok=True)
-        # Dump model
-        joblib.dump(model, model_path)
-        logging.info(f"{model_type} Model Pickle saved at: {model_path}")
-        # Log model metrics to MLflow if enabled
-        if args.mlflow:
-            with mlflow.start_run(run_name=model_type, nested=True):
-                mlflow.sklearn.log_model(
-                    sk_model=model,
-                    artifact_path=model_type,
-                    input_example=X_train.iloc[:5],
-                    signature=mlflow.models.infer_signature(
-                        X_train, model.predict(X_train)
-                    ),
-                )
-                params = model.get_params()
-                for key, value in params.items():
-                    mlflow.log_param(key, value)
-                mlflow.log_metric("RMSE", rmse)
-                mlflow.log_metric("MAE", mae)
-                mlflow.log_param("Model Pickle Path", model_path)
-    logging.info("Model training completed.")
-    # End MLflow run if it was started
-    if args.mlflow:
-        mlflow.end_run()
-        logging.info("MLflow run ended.")
+            logging.info(
+                f"End-to-end ML pipeline completed under parent run ID: {parent_run.info.run_id}"
+            )
+    else:
+        logging.info("Running ML pipeline without MLflow tracking.")
+        run_data_preparation(config_path, mlflow_enabled)
+        run_model_training(config_path, mlflow_enabled)
+        run_model_scoring(config_path, mlflow_enabled)
 
 
 if __name__ == "__main__":
