@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 import subprocess
 
 import mlflow
@@ -19,7 +20,7 @@ def run_data_preparation(config_path, mlflow_enabled):
             subprocess.run(
                 ["python", "scripts/ingest.py", "--config", config_path, "--mlflow"],
                 env=env,
-                check=True
+                check=True,
             )
 
             mlflow.log_metric("ingestion_complete", 1)
@@ -41,7 +42,7 @@ def run_model_training(config_path, mlflow_enabled):
             subprocess.run(
                 ["python", "scripts/train.py", "--config", config_path, "--mlflow"],
                 env=env,
-                check=True
+                check=True,
             )
             mlflow.log_metric("model_training_complete", 1)
     else:
@@ -62,7 +63,7 @@ def run_model_scoring(config_path, mlflow_enabled):
             subprocess.run(
                 ["python", "scripts/score.py", "--config", config_path, "--mlflow"],
                 env=env,
-                check=True
+                check=True,
             )
             mlflow.log_metric("model_scoring_complete", 1)
     else:
