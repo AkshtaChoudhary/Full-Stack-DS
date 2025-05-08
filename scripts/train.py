@@ -41,7 +41,7 @@ def main():
             mlflow.start_run(run_id=run_id)
         else:
             mlflow.set_experiment("Housing Experiment")
-            mlflow.start_run(run_name="Data Preparation", nested=True)
+            mlflow.start_run(run_name="Training", nested=True)
         logging.info("MLflow tracking started.")
 
     logging.info("Starting data preparation...")
@@ -63,17 +63,6 @@ def main():
         mlflow.log_param("Stratified Split", config["splits"])
         mlflow.log_param("Test Size", config["test_size"])
         mlflow.sklearn.log_model(imputer, artifact_path="imputer")
-
-    # End MLflow run if it was started
-    if args.mlflow:
-        mlflow.end_run()
-        logging.info("Data Preparation MLflow run ended.")
-
-    # Start MLflow run if enabled
-    if args.mlflow:
-        mlflow.set_experiment("Housing Experiment")
-        mlflow.start_run(run_name="Modeling")
-        logging.info("MLflow tracking started.")
 
     logging.info("Starting model training...")
     for model_type in [
