@@ -156,13 +156,16 @@ jobs:
         run: |
           uv pip install dist/*.whl
 
+      - name: Show directory after installing wheel file
+        run: tree -L 3
+
       - name: Data ingest
         run: |
           python scripts/ingest_data.py 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
 
       - name: Model training
         run: |
-          python scripts/train.py 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
+          python scripts/train.py --config config/config.yaml 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
 
       - name: Confirm model file exists
         run: |
