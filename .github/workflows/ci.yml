@@ -164,6 +164,12 @@ jobs:
         run: |
           python scripts/train.py 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
 
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts/model
+          path: artifacts/model
+
       - name: Model scoring
         run: |
           python scripts/score.py 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
@@ -182,6 +188,12 @@ jobs:
           registry: ${{ secrets.ACR_LOGIN_SERVER }}
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts/model
+          path: artifacts/model
 
       - name: Build Docker image
         run: |
