@@ -167,8 +167,9 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: artifacts/model
-          path: artifacts/model
+          name: artifacts
+          path: artifacts/model/**/*.pkl
+          include-hidden-files: True
 
       - name: Model scoring
         run: |
@@ -193,8 +194,8 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: artifacts/model
-          path: artifacts/model
+          name: artifacts
+          path: artifacts/model/**/*.pkl
 
       - name: Build Docker image
         run: |
