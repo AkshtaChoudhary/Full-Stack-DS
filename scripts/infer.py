@@ -1,21 +1,22 @@
 import argparse
 import logging
-import os
+import json
 
-import mlflow
-import mlflow.sklearn
-import yaml
+import pandas as pd
 
-from housing.data_preparation import load_data, prepare_data, stratified_split
+from housing.data_preparation import prepare_data, stratified_split
 from housing.logging_utils import configure_logging
 from housing.model_scoring import evaluate_model
 
+
 def preprocess(input_df):
-    _, test_set = stratified_split(input_df)
-    y_test = test_set["median_house_value"]
-    X_test, _ = prepare_data(test_set.drop("median_house_value", axis=1))
+    # Creating y variables
+    y_test = input_df["median_house_value"]
+    # Preparing data
+    X_test, _ = prepare_data(input_df.drop("median_house_value", axis=1))
     logging.info("Processing complete.")
-    return X_test,y_test
+    return X_test, y_test
+
 
 def main(args):
     # Configure logging
@@ -24,36 +25,47 @@ def main(args):
         log_path=args.log_path,
         console_log=not args.no_console_log,
     )
-    
-    # Loading Data
-    logging.info("Loading data...")
-    input_df = pd.read_csv(args.input)
+
+    # Load input data from JSON
+    logging.info("Loading data from JSON input...")
+    try:
+        input_data = json.loads(args.input)
+        input_df = pd.DataFrame(input_data)
+    except Exception as e:
+        logging.error(f"Failed to parse input JSON: {e}")
+        raise
 
     # Preprocessing Data
     logging.info("Preprocessing data...")
-    X,y = preprocess(input_df)
+    X, y = preprocess(input_df)
 
     # Calling evalutaion
     logging.info("Running inference...")
-    preds,rmse, mae = evaluate_model(args.model, X, y)
+    preds, rmse, mae = evaluate_model(args.model, X, y)
     logging.info(f"Model scoring completed with Test RMSE:{rmse} & MAE:{mae}")
 
     logging.info("Saving predictions...")
-    output_df = input_df.copy()
+    output_df = X.copy()
     output_df["prediction"] = preds
+    output_df['rmse'] = rmse
+    output_df['mae'] = mae
     output_df.to_csv(args.output, index=False)
 
     logging.info("Inference complete.")
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(decription = "Inference")
+    parser = argparse.ArgumentParser(description="Inference")
     parser.add_argument("--model", required=True, help="Path to model")
-    parser.add_argument("--input", required=True, help="Path to input CSV")
+    parser.add_argument("--input", required=True, help="Input Data JSON")
     parser.add_argument("--output", required=True, help="Path to output CSV")
-    parser.add_argument("--log-level", default="INFO", help="Logging level (e.g. DEBUG, INFO)")
+    parser.add_argument(
+        "--log-level", default="INFO", help="Logging level (e.g. DEBUG, INFO)"
+    )
     parser.add_argument("--log-path", help="Optional log file path")
-    parser.add_argument("--no-console-log", action="store_true", help="Suppress console logging")
-    parser.add_argument("--mlflow", action="store_true", help="Enable MLflow tracking")
+    parser.add_argument(
+        "--no-console-log", action="store_true", help="Suppress console logging"
+    )
     args = parser.parse_args()
 
     main(args)
