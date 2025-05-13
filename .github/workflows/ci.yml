@@ -164,6 +164,10 @@ jobs:
         run: |
           python scripts/train.py 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
 
+      - name: Confirm model file exists
+        run: |
+          ls -lh artifacts/model
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
