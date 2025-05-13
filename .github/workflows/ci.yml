@@ -161,7 +161,7 @@ jobs:
 
       - name: Data ingest
         run: |
-          python scripts/ingest_data.py 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
+          python scripts/ingest.py 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
 
       - name: Model training
         run: |
