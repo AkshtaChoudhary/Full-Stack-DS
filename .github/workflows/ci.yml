@@ -234,7 +234,7 @@ jobs:
       - name: Run container and test endpoint
         run: |
           docker run --rm --name test_container ${{ secrets.ACR_LOGIN_SERVER }}/fsds-inference:latest \
-          --model rf_rs_model.pkl \
+          --model rf_gs_model.pkl \
           --input '{\
             "longitude": [-122.23], 
             "latitude": [37.88], 

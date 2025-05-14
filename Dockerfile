@@ -12,7 +12,7 @@ USER appuser
 # Copy your application code into the container
 COPY --chown=appuser:appuser ./dist/fsds-0.1.0-py3-none-any.whl /home/appuser/app/fsds-0.1.0-py3-none-any.whl
 COPY --chown=appuser:appuser ./scripts/infer.py /home/appuser/app/infer.py
-COPY --chown=appuser:appuser ./artifacts/model/rf_rs_model.pkl /home/appuser/app/rf_rs_model.pkl
+COPY --chown=appuser:appuser ./artifacts/rf_gs_model.pkl /home/appuser/app/rf_gs_model.pkl
 
 # Set working directory
 WORKDIR /home/appuser/app
