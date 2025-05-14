@@ -14,4 +14,4 @@ def evaluate_model(model_path, X_test, y_test):
 
     rmse = np.sqrt(mean_squared_error(y_test, predictions))
     mae = mean_absolute_error(y_test, predictions)
-    return rmse, mae
+    return predictions,rmse, mae

@@ -70,7 +70,7 @@ def main():
         # Model path
         m_path = config[model_type]
         # Scoring function
-        rmse, mae = evaluate_model(m_path, X_test, y_test)
+        _, rmse, mae = evaluate_model(m_path, X_test, y_test)
         logging.info(
             f"{model_type} Model scoring completed with Test RMSE:{rmse} & MAE:{mae}"
         )

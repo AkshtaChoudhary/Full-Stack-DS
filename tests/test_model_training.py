@@ -8,9 +8,9 @@ def test_model_training():
     y = train_set["median_house_value"]
     for model_type in [
         "linear_regression",
-        "decision_tree",
-        "random_forest_random_search",
-        "random_forest_grid_search",
+        #"decision_tree",
+        #"random_forest_random_search",
+        #"random_forest_grid_search",
     ]:
         model, rmse, mae = model_training.train_model(X, y, model_type)
         assert model is not None

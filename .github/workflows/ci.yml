@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-
 jobs:
   style_test:
     runs-on: ubuntu-latest
@@ -16,18 +15,18 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.12'
 
       - name: Install uv
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          which uv || echo "uv not installed"
 
       - name: Create venv and install tools
         run: |
           uv venv
           echo "$PWD/.venv/bin" >> $GITHUB_PATH
-          # uv pip install -r requirements.txt
           uv pip install -e ".[formatter]"
 
       - name: Run isort
@@ -59,12 +58,12 @@ jobs:
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          which uv || echo "uv not installed"
 
       - name: Create venv and install tools
         run: |
           uv venv
           echo "$PWD/.venv/bin" >> $GITHUB_PATH
-          # uv pip install -r requirements.txt
           uv pip install -e ".[test]"
 
       - name: Install in dev mode
@@ -91,12 +90,12 @@ jobs:
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          which uv || echo "uv not installed"
 
       - name: Create venv and install tools
         run: |
           uv venv
           echo "$PWD/.venv/bin" >> $GITHUB_PATH
-          # uv pip install -r requirements.txt
           uv pip install -r pyproject.toml
           uv pip install -e ".[build_p]"
 
@@ -122,49 +121,133 @@ jobs:
           name: dist
           path: dist/
 
-
   install:
-      runs-on: ubuntu-latest
-      needs: build
+    runs-on: ubuntu-latest
+    needs: build
 
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-        - name: Download artifacts
-          uses: actions/download-artifact@v4
-          with:
-            name: dist
-            path: dist/
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
 
-        - name: Set up Python
-          uses: actions/setup-python@v4
-          with:
-            python-version: '3.12'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
 
-        - name: Install uv
-          run: |
-            curl -LsSf https://astral.sh/uv/install.sh | sh
-            echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          which uv || echo "uv not installed"
 
-        - name: Create venv and install tools
-          run: |
-            uv venv
-            echo "$PWD/.venv/bin" >> $GITHUB_PATH
+      - name: Create venv and install tools
+        run: |
+          uv venv
+          echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
-        - name: Install built package
-          run: |
-            uv pip install dist/*.whl
+      - name: Install built package
+        run: |
+          uv pip install dist/*.whl
 
-        - name: data ingest
-          run: |
-            python scripts/ingest_data.py 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
+      - name: Show directory after installing wheel file
+        run: tree -L 3
 
-        - name: model training
-          run: |
-            python scripts/train.py 2>&1  | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
+      - name: Data ingest
+        run: |
+          python scripts/ingest.py 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
 
-        - name: model scoring
-          run: |
-            python scripts/score.py 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
+      - name: Model training
+        run: |
+          python scripts/train.py --config config/config.yaml 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
 
+      - name: Confirm model file exists
+        run: |
+          ls -lh artifacts/model
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: artifacts/model
+          include-hidden-files: True
+
+      - name: Model scoring
+        run: |
+          python scripts/score.py 2>&1 | while IFS= read -r line; do echo "$(date '+%Y-%m-%d %H:%M:%S') $line"; done
+
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: install
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: List downloaded artifacts dist
+        run: tree dist
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: artifacts
+
+      - name: List downloaded artifacts
+        run: tree artifacts
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/fsds-inference:latest .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/fsds-inference:latest
+
+  pull-container-run:
+    name: Pull and Test Docker Container
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Log in to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Pull container image from ACR
+        run: docker pull ${{ secrets.ACR_LOGIN_SERVER }}/fsds-inference:latest
+
+      - name: Run container and test endpoint
+        run: |
+          INPUT_JSON='{"longitude": [-122.23], "latitude": [37.88], "housing_median_age": [41], "total_rooms": [880], "total_bedrooms": [129], "population": [322], "households": [126], "median_income": [8.3252], "median_house_value": [452600], "ocean_proximity": ["NEAR BAY"]}'
+          
+          docker run --rm --name test_container ${{ secrets.ACR_LOGIN_SERVER }}/fsds-inference:latest \
+            --model rf_gs_model.pkl \
+            --input "$INPUT_JSON" \
+            --output predictions.csv \
+            --log-level INFO \
+            --log-path app/logs
+
+          docker stop test_container || echo "Container already stopped"
