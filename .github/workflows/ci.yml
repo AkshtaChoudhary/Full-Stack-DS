@@ -243,21 +243,21 @@ jobs:
       - name: Run container and test endpoint
         run: |
           docker run --rm --name test_container ${{ secrets.ACR_LOGIN_SERVER }}/fsds-inference:latest \
-          --model rf_gs_model.pkl \
-          --input '{\
-            "longitude": [-122.23], 
-            "latitude": [37.88], 
-            "housing_median_age": [41], 
-            "total_rooms": [880], 
-            "total_bedrooms": [129], 
-            "population": [322], 
-            "households": [126], 
-            "median_income": [8.3252], 
-            "median_house_value": [452600], 
-            "ocean_proximity": ["NEAR BAY"]
-          }' \
-          --output predictions.csv \
-          --log-level INFO \
-          --log-path app/logs
+            --model rf_gs_model.pkl \
+            --input '{\
+              "longitude": [-122.23], 
+              "latitude": [37.88], 
+              "housing_median_age": [41], 
+              "total_rooms": [880], 
+              "total_bedrooms": [129], 
+              "population": [322], 
+              "households": [126], 
+              "median_income": [8.3252], 
+              "median_house_value": [452600], 
+              "ocean_proximity": ["NEAR BAY"]
+            }' \
+            --output predictions.csv \
+            --log-level INFO \
+            --log-path app/logs
 
           docker stop test_container || echo "Container already stopped"
