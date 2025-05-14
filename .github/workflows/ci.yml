@@ -240,9 +240,9 @@ jobs:
       - name: Pull container image from ACR
         run: docker pull ${{ secrets.ACR_LOGIN_SERVER }}/fsds-inference:latest
 
-      - name: Create input JSON file
+      - name: Read input JSON into variable and run container
         run: |
-          cat <<EOF > input.json
+          INPUT_JSON=$(cat <<EOF
           {
             "longitude": [-122.23],
             "latitude": [37.88],
@@ -256,12 +256,13 @@ jobs:
             "ocean_proximity": ["NEAR BAY"]
           }
           EOF
+          )
 
       - name: Run container and test endpoint
         run: |
           docker run --rm --name test_container ${{ secrets.ACR_LOGIN_SERVER }}/fsds-inference:latest \
             --model rf_gs_model.pkl \
-            --input /app/input.json \
+            --input "$INPUT_JSON" \
             --output predictions.csv \
             --log-level INFO \
             --log-path app/logs
