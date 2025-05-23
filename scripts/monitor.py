@@ -8,6 +8,7 @@ import mlflow
 import mlflow.sklearn
 import yaml
 
+from housing.data_ingestion import fetch_data
 from housing.data_preparation import load_data, prepare_data, stratified_split
 from housing.logging_utils import configure_logging
 from housing.model_monitoring import (
