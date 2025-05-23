@@ -195,6 +195,12 @@ jobs:
         with:
           name: dist
           path: dist/
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifacts
+          path: artifacts
        
       - name: Set up Python
         uses: actions/setup-python@v4
