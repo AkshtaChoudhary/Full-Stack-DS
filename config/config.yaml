@@ -7,3 +7,6 @@ random_forest_random_search: "artifacts/model/rf_rs_model.pkl"
 random_forest_grid_search: "artifacts/model/rf_gs_model.pkl"
 test_size: 0.2
 splits: 1
+model_monitoring_path: "artifacts/reports/evidently/"
+target : "median_house_value"
+final_model : "random_forest_grid_search"
