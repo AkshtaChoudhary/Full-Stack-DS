@@ -54,6 +54,8 @@ def main():
     with open(args.config) as f:
         config = yaml.safe_load(f)
 
+    # Get the data
+    fetch_data(args.config)
     # Load the data
     df = load_data(args.config)
     # Train test split
