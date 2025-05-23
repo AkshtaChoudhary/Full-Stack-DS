@@ -71,8 +71,18 @@ def main():
 
     # Getting the final model name from config
     model_type = config["final_model"]
+    # Model path from confi
+    model_path = config[model_type]
+    if not os.path.exists(model_path):
+        # Separate the path
+        parts = config[model_type].split(os.sep)
+        # Removing model folder
+        filtered_parts = [part for part in parts if part != "model"]
+        # Creating the new path
+        model_path = os.sep.join(filtered_parts)
+    
     # Loading the model
-    model = joblib.load(config[model_type])
+    model = joblib.load(model_path)
 
     # Make predictions
     train_set["prediction"] = model.predict(X_train)
