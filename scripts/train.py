@@ -11,6 +11,8 @@ from housing.data_preparation import load_data, prepare_data, stratified_split
 from housing.logging_utils import configure_logging
 from housing.model_training import train_model
 
+mlflow.set_tracking_uri("file://" + os.path.abspath("mlruns"))
+
 
 def main():
     parser = argparse.ArgumentParser(description="Train Housing Model")

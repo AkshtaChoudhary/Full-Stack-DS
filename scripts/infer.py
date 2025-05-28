@@ -1,10 +1,10 @@
 import argparse
-import logging
 import json
+import logging
 
 import pandas as pd
 
-from housing.data_preparation import prepare_data, stratified_split
+from housing.data_preparation import prepare_data
 from housing.logging_utils import configure_logging
 from housing.model_scoring import evaluate_model
 
@@ -47,8 +47,8 @@ def main(args):
     logging.info("Saving predictions...")
     output_df = X.copy()
     output_df["prediction"] = preds
-    output_df['rmse'] = rmse
-    output_df['mae'] = mae
+    output_df["rmse"] = rmse
+    output_df["mae"] = mae
     output_df.to_csv(args.output, index=False)
 
     logging.info("Inference complete.")

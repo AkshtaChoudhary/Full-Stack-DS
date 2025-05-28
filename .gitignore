@@ -12,3 +12,5 @@ dist
 **/*.pkl
 **/*.joblib
 mlruns
+**/*.html
+**/*.json

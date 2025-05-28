@@ -6,11 +6,12 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "mlflow>=2.22.0",
-    "numpy>=2.2.5",
+    "numpy>=1.22.0,<2.1",
     "pandas>=2.2.3",
     "pytest>=8.3.5",
     "pyyaml>=6.0.2",
     "scikit-learn>=1.6.1",
+    "evidently==0.6.7"
 ]
 
 [project.optional-dependencies]

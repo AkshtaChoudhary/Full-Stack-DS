@@ -7,6 +7,8 @@ import mlflow
 from housing.data_ingestion import fetch_data
 from housing.logging_utils import configure_logging
 
+mlflow.set_tracking_uri("file://" + os.path.abspath("mlruns"))
+
 
 def main():
     parser = argparse.ArgumentParser(description="Ingest Housing Data")
