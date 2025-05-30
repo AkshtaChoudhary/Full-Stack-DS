@@ -1,0 +1,9 @@
+{
+	"name": "fsds-akshta",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "814d9ecc-1ef8-408a-baf5-856bcd14c636",
+		"tenantId": "e714ef31-faab-41d2-9f1e-e6df4af16ab8"
+	}
+}
