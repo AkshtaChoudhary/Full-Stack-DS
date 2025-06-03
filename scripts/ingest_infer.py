@@ -66,7 +66,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Inference")
     parser.add_argument("--model", required=True, help="Path to model")
-    parser.add_argument("--input url", required=True, help="Input Data URL")
+    parser.add_argument("--input", required=True, help="Input Data URL")
     parser.add_argument("--output", required=True, help="Path to output CSV")
     parser.add_argument(
         "--log-level", default="INFO", help="Logging level (e.g. DEBUG, INFO)"
