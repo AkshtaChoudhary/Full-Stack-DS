@@ -3,7 +3,14 @@ name: Python Package Build and Test
 on:
   push:
     branches:
-      - enh/issue#8/model-monitoring
+      - main
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run workflow on'
+        required: false
+        default: 'main'
+
 jobs:
   style_test:
     runs-on: ubuntu-latest
