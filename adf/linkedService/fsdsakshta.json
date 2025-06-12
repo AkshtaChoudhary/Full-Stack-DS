@@ -1,0 +1,20 @@
+{
+	"name": "fsdsakshta",
+	"properties": {
+		"annotations": [],
+		"type": "AzureDatabricks",
+		"typeProperties": {
+			"domain": "https://adb-2046911313064696.16.azuredatabricks.net",
+			"authentication": "MSI",
+			"workspaceResourceId": "/subscriptions/c4a49a4a-9bd7-49cb-aef3-784883b67ee3/resourceGroups/FSDS-Apr-batch-04/providers/Microsoft.Databricks/workspaces/fsds-akshta",
+			"newClusterNodeType": "Standard_DS3_v2",
+			"newClusterNumOfWorker": "1",
+			"newClusterSparkEnvVars": {
+				"PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+			},
+			"newClusterVersion": "13.3 LTS (Standard)",
+			"clusterOption": "Fixed",
+			"newClusterInitScripts": []
+		}
+	}
+}
